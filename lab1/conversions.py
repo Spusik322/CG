@@ -60,56 +60,6 @@ def cmyk_to_rgb(c, m, y, k):
     return r, g, b
 
 
-def rgb_to_hsv(r, g, b):
-    r1 = clamp(r, 0, 255) / 255.0
-    g1 = clamp(g, 0, 255) / 255.0
-    b1 = clamp(b, 0, 255) / 255.0
-
-    max_c = max(r1, g1, b1)
-    min_c = min(r1, g1, b1)
-    diff = max_c - min_c
-
-    v = max_c
-
-    if diff == 0:
-        h = 0.0
-        s = 0.0
-    else:
-        s = diff / max_c
-        h = _hue_from_rgb(r1, g1, b1, max_c, diff)
-
-    return h, s * 100.0, v * 100.0
-
-
-def hsv_to_rgb(h, s, v):
-    h = clamp(h, 0, 360) % 360
-    s = clamp(s, 0, 100) / 100.0
-    v = clamp(v, 0, 100) / 100.0
-
-    c = v * s
-    x = c * (1.0 - abs((h / 60.0) % 2 - 1.0))
-    m = v - c
-
-    if 0 <= h < 60:
-        r1, g1, b1 = c, x, 0
-    elif 60 <= h < 120:
-        r1, g1, b1 = x, c, 0
-    elif 120 <= h < 180:
-        r1, g1, b1 = 0, c, x
-    elif 180 <= h < 240:
-        r1, g1, b1 = 0, x, c
-    elif 240 <= h < 300:
-        r1, g1, b1 = x, 0, c
-    else:
-        r1, g1, b1 = c, 0, x
-
-    r = int(round(clamp((r1 + m) * 255.0, 0, 255)))
-    g = int(round(clamp((g1 + m) * 255.0, 0, 255)))
-    b = int(round(clamp((b1 + m) * 255.0, 0, 255)))
-
-    return r, g, b
-
-
 def rgb_to_hls(r, g, b):
     r1 = clamp(r, 0, 255) / 255.0
     g1 = clamp(g, 0, 255) / 255.0
