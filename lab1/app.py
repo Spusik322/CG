@@ -15,7 +15,7 @@ from widgets import ColorRow
 class ColorLabApp:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Лабораторная работа 1: CMYK - RGB - HLS")
+        self.root.title("CMYK - RGB - HLS")
         self.root.geometry("1100x430")
         self.root.minsize(980, 380)
 
