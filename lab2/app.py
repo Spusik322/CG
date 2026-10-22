@@ -6,6 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
+import sys
 
 from utils import cv2_imread_unicode, to_gray, ensure_rgb
 from contrast import process_contrast
@@ -16,6 +17,7 @@ class ImageApp:
         self.root = root
         self.root.title("Лаб. работа 2 | Вариант 3")
         self.root.geometry("1100x800")
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing) 
         
         self.img_orig = None
         
@@ -221,8 +223,15 @@ class ImageApp:
         ax.hist(gray.ravel(), bins=256, range=(0, 256), color="black")
         ax.set_title(title, fontsize=10)
         ax.set_xlim(0, 256)
-        ax.set_yticks([])
-        ax.tick_params(axis='x', labelsize=8)
+        # Убрали ax.set_yticks([])
+        ax.set_ylabel('Кол-во пикселей', fontsize=8)
+        ax.set_xlabel('Яркость', fontsize=8)
+        ax.tick_params(axis='both', labelsize=8)
+
+    def on_closing(self):
+        plt.close('all')
+        self.root.destroy()
+        sys.exit(0)
 
 if __name__ == "__main__":
     root = tk.Tk()

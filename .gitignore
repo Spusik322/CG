@@ -1,3 +1,7 @@
 /lab1/__pycache__
 /lab1/build
 *.pyc
+*.toc
+*.pyz
+*.html
+/lab2/build
