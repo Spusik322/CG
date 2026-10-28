@@ -37,17 +37,18 @@ class RasterApp:
             ("Пошаговый алгоритм", "step"),
             ("Алгоритм ЦДА", "dda"),
             ("Брезенхем (линия)", "bresenham_line"),
-            ("Брезенхем (окружность)", "bresenham_circle")
+            ("Брезенхем (окружность)", "bresenham_circle"),
+            ("Алгоритм Ву (сглаживание)", "wu")
         ]
         for text, val in algos:
             tk.Radiobutton(control_frame, text=text, variable=self.algo_var, value=val).pack(anchor="w")
             
         tk.Label(control_frame, text="\n2. Введите координаты:", font=("Arial", 10, "bold")).pack(anchor="w")
         
-        self.x1_var = tk.StringVar(value="0")
-        self.y1_var = tk.StringVar(value="0")
-        self.x2_var = tk.StringVar(value="10")
-        self.y2_var = tk.StringVar(value="5")
+        self.x1_var = tk.StringVar(value="5")
+        self.y1_var = tk.StringVar(value="50")
+        self.x2_var = tk.StringVar(value="-5")
+        self.y2_var = tk.StringVar(value="-50")
         
         self.create_input(control_frame, "X1 / X центра:", self.x1_var)
         self.create_input(control_frame, "Y1 / Y центра:", self.y1_var)
@@ -89,11 +90,9 @@ class RasterApp:
 
     def on_zoom(self, event):
         zoom_factor = 1.2 if (event.num == 4 or event.delta > 0) else 1/1.2
-        
         cx = self.canvas_width // 2 + self.offset_x
         cy = self.canvas_height // 2 + self.offset_y
         pixel_step = self.base_grid_step * self.zoom
-        
         math_x = (event.x - cx) / pixel_step
         math_y = (cy - event.y) / pixel_step
         
@@ -103,7 +102,6 @@ class RasterApp:
         new_pixel_step = self.base_grid_step * self.zoom
         self.offset_x = event.x - math_x * new_pixel_step - self.canvas_width // 2
         self.offset_y = event.y + math_y * new_pixel_step - self.canvas_height // 2
-        
         self.redraw_canvas()
 
     def on_pan_start(self, event):
@@ -124,7 +122,6 @@ class RasterApp:
         target = 30.0
         if pixel_step >= target:
             return 1
-        
         k = 1
         while pixel_step * k < target:
             if str(k).startswith('1'): k *= 5
@@ -150,7 +147,6 @@ class RasterApp:
             sx = cx + (i + 0.5) * pixel_step
             if 0 <= sx <= self.canvas_width:
                 self.canvas.create_line(sx, 0, sx, self.canvas_height, fill="#e0e0e0")
-            
             lx = cx + i * pixel_step
             if 0 <= lx <= self.canvas_width and i != 0:
                 self.canvas.create_text(lx, cy + 10, text=str(i), font=("Arial", 8), fill="gray")
@@ -162,7 +158,6 @@ class RasterApp:
             sy = cy - (j + 0.5) * pixel_step
             if 0 <= sy <= self.canvas_height:
                 self.canvas.create_line(0, sy, self.canvas_width, sy, fill="#e0e0e0")
-            
             ly = cy - j * pixel_step
             if 0 <= ly <= self.canvas_height and j != 0:
                 self.canvas.create_text(cx - 10, ly, text=str(j), font=("Arial", 8), fill="gray")
@@ -174,12 +169,22 @@ class RasterApp:
         self.canvas.create_text(cx - 10, cy + 10, text="0", font=("Arial", 9))
 
         if hasattr(self, 'current_points') and self.current_points:
-            for px, py in self.current_points:
+            for pt in self.current_points:
+                if len(pt) == 3:
+                    px, py, alpha = pt
+                    g_val = 255 - int(255 * alpha)
+                    color = f"#ff{g_val:02x}{g_val:02x}"
+                    outline_color = color
+                else:
+                    px, py = pt
+                    color = "red"
+                    outline_color = "darkred"
+                    
                 sx = cx + px * pixel_step
                 sy = cy - py * pixel_step
                 
                 r = pixel_step / 2
-                self.canvas.create_rectangle(sx - r, sy - r, sx + r, sy + r, fill="red", outline="darkred")
+                self.canvas.create_rectangle(sx - r, sy - r, sx + r, sy + r, fill=color, outline=outline_color)
 
     def clear(self):
         self.current_points = []
@@ -210,6 +215,8 @@ class RasterApp:
                 points, _ = algorithms.bresenham_line(x1, y1, x2, y2)
             elif algo == "bresenham_circle":
                 points, _ = algorithms.bresenham_circle(x1, y1, x2)
+            elif algo == "wu":
+                points, _ = algorithms.wu_line(x1, y1, x2, y2)
         end_time = time.perf_counter()
         
         avg_time_ms = ((end_time - start_time) * 1000) / runs
@@ -218,6 +225,7 @@ class RasterApp:
         elif algo == "dda": algo_name = "ЦДА (DDA)"
         elif algo == "bresenham_line": algo_name = "Брезенхем (линия)"
         elif algo == "bresenham_circle": algo_name = "Брезенхем (окружность)"
+        elif algo == "wu": algo_name = "Ву (Сглаживание)"
             
         self.current_points = points
         self.redraw_canvas()
@@ -225,7 +233,7 @@ class RasterApp:
         self.stats_text.config(state=tk.NORMAL)
         self.stats_text.delete(1.0, tk.END)
         
-        stats = (f"РЕЗУЛЬТАТЫ\n"
+        stats = (f"--- РЕЗУЛЬТАТЫ ---\n"
                  f"Алгоритм: {algo_name}\n"
                  f"Среднее время ({runs} запусков):\n{avg_time_ms:.6f} мс\n"
                  f"Кол-во точек: {len(self.current_points)}\n")
